@@ -10,6 +10,9 @@
 
 @interface ViewController : UIViewController
 
+@property (nonatomic) IBOutlet UISearchBar *searchBar;
+-(IBAction) handleSearchButtonPressed:(id)sender;
+
 
 @end
 

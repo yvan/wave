@@ -15,8 +15,8 @@
 @property (nonatomic) MCNearbyServiceBrowser *autobrowser;
 @property (nonatomic) MCPeerID *localpeerID;
 @property (nonatomic) MCSession *session;
-@property (nonatomic) UIDevice *device;
-@property (nonatomic) NSString *uniqueIdentifier;
+@property (nonatomic) NSMutableArray *connectedpeersArray;
+@property (nonatomic) NSInteger peerArrayIndex;
 
 @end
 
@@ -25,6 +25,9 @@
 - (void)viewDidLoad {
     
     [super viewDidLoad];
+    
+    //WE WANT TO START FILLING IN OUR PEER ARRAY AT THE 0th INDEX
+    _peerArrayIndex = 0;
     
     //START ADVERTISING OUR PRESENCE TO PEERS (handleStartAdvertisingButtonPressed)
     //START SEARCHING FOR PEERS (handleFindPeersButton), SOON AS WE FIND ONE CONNECT.
@@ -54,24 +57,32 @@
     // Dispose of any resources that can be recreated.
 }
 
+//SENDS
+-(void)handleSearchButtonPressed:(id)sender{
+    
+    NSString *searchText = _searchBar.text;
+    NSData *data = [searchText dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error = nil;
+    
+    if([self.session sendData:data toPeers:_connectedpeersArray withMode:MCSessionSendDataReliable error:&error]){
+        
+        NSLog(@"DEBUG:Data Sent Successfully");
+    }
+}
+
 //BROWSER DELEGATE METHOD THAT IDENTIFIES WHEN WE HAVE FOUND A PEER
-- (void)browser:(MCNearbyServiceBrowser *)browser
-      foundPeer:(MCPeerID *)peerID
-withDiscoveryInfo:(NSDictionary *)info{
+- (void)browser:(MCNearbyServiceBrowser *)browser foundPeer:(MCPeerID *)peerID withDiscoveryInfo:(NSDictionary *)info{
     
-    
+    //ADD A PEER TO THE ARRAY OF PEERS WE ARE CONNECTED TO
+    _peerArrayIndex++;
+    _connectedpeersArray[_peerArrayIndex] = peerID;
 }
 //BROWSER DELEGATE METHOD THAT IDENTIFIES WHEN WE HAVE LOST OUR CONNECTION TO THE PEER
-- (void)browser:(MCNearbyServiceBrowser *)browser
-       lostPeer:(MCPeerID *)peerID{
+- (void)browser:(MCNearbyServiceBrowser *)browser lostPeer:(MCPeerID *)peerID{
     
 }
 //ADVERTISING DELEGATE METHOD THAT IDENTIFIES WHEN WE RECEIVE AND INVITE FROM A PEER
-- (void)advertiser:(MCNearbyServiceAdvertiser *)advertiser
-didReceiveInvitationFromPeer:(MCPeerID *)peerID
-       withContext:(NSData *)context
- invitationHandler:(void (^)(BOOL accept,
-                             MCSession *session))invitationHandler{
+- (void)advertiser:(MCNearbyServiceAdvertiser *)advertiser didReceiveInvitationFromPeer:(MCPeerID *)peerID withContext:(NSData *)context invitationHandler:(void (^)(BOOL accept, MCSession *session))invitationHandler{
     
     
 }
