@@ -11,6 +11,7 @@
 @interface ViewController : UIViewController
 
 @property (nonatomic) IBOutlet UISearchBar *searchBar;
+@property (nonatomic) IBOutlet UITextView *textDisplayField;
 -(IBAction) handleSearchButtonPressed:(id)sender;
 
 
