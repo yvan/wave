@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		E9ABD4BD19CD064100868C2D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E9ABD4BC19CD064100868C2D /* main.m */; };
 		E9ABD4C019CD064100868C2D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E9ABD4BF19CD064100868C2D /* AppDelegate.m */; };
-		E9ABD4C319CD064100868C2D /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E9ABD4C219CD064100868C2D /* ViewController.m */; };
+		E9ABD4C319CD064100868C2D /* ViewSearchController.m in Sources */ = {isa = PBXBuildFile; fileRef = E9ABD4C219CD064100868C2D /* ViewSearchController.m */; };
 		E9ABD4C619CD064100868C2D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E9ABD4C419CD064100868C2D /* Main.storyboard */; };
 		E9ABD4C819CD064100868C2D /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9ABD4C719CD064100868C2D /* Images.xcassets */; };
 		E9ABD4CB19CD064100868C2D /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = E9ABD4C919CD064100868C2D /* LaunchScreen.xib */; };
@@ -32,8 +32,8 @@
 		E9ABD4BC19CD064100868C2D /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E9ABD4BE19CD064100868C2D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		E9ABD4BF19CD064100868C2D /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		E9ABD4C119CD064100868C2D /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		E9ABD4C219CD064100868C2D /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		E9ABD4C119CD064100868C2D /* ViewSearchController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewSearchController.h; sourceTree = "<group>"; };
+		E9ABD4C219CD064100868C2D /* ViewSearchController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewSearchController.m; sourceTree = "<group>"; };
 		E9ABD4C519CD064100868C2D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		E9ABD4C719CD064100868C2D /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		E9ABD4CA19CD064100868C2D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
@@ -83,8 +83,8 @@
 			children = (
 				E9ABD4BE19CD064100868C2D /* AppDelegate.h */,
 				E9ABD4BF19CD064100868C2D /* AppDelegate.m */,
-				E9ABD4C119CD064100868C2D /* ViewController.h */,
-				E9ABD4C219CD064100868C2D /* ViewController.m */,
+				E9ABD4C119CD064100868C2D /* ViewSearchController.h */,
+				E9ABD4C219CD064100868C2D /* ViewSearchController.m */,
 				E9ABD4C419CD064100868C2D /* Main.storyboard */,
 				E9ABD4C719CD064100868C2D /* Images.xcassets */,
 				E9ABD4C919CD064100868C2D /* LaunchScreen.xib */,
@@ -220,7 +220,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E9ABD4C319CD064100868C2D /* ViewController.m in Sources */,
+				E9ABD4C319CD064100868C2D /* ViewSearchController.m in Sources */,
 				E9ABD4C019CD064100868C2D /* AppDelegate.m in Sources */,
 				E9ABD4BD19CD064100868C2D /* main.m in Sources */,
 			);
