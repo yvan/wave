@@ -352,7 +352,7 @@
 				INFOPLIST_FILE = wave/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "a205d67e-7534-4257-aeb5-37f453997362";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Debug;
 		};
@@ -364,7 +364,7 @@
 				INFOPLIST_FILE = wave/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "a205d67e-7534-4257-aeb5-37f453997362";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Release;
 		};
