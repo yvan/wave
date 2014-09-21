@@ -7,7 +7,7 @@
 //
 
 #import "ViewSearchController.h"
-@import MultipeerConnectivity;
+#import "MultipeerConnectivity/MultipeerConnectivity.h"
 
 @interface ViewController () <MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate>
 
@@ -87,14 +87,23 @@
 // RECEIVED DATA FROM REMOTE PEER - GONNA DISPLAY DATA IN OUR TEXTFIELD HERE
 - (void)session:(MCSession *)session didReceiveData:(NSData *)data fromPeer:(MCPeerID *)peerID{
     
-    NSString *message =[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    _textDisplayField.text = [NSString stringWithFormat:@"RECIVED MESSAGE ON THIS PHONE: %@",message];
+   
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        
+        _textDisplayField.text = @"RECEIVED DATA";
+         NSString *message =[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        _textDisplayField.text = [NSString stringWithFormat:@"RECIVED MESSAGE ON THIS PHONE: %@",message];
+    });
+    
+    
+    
 }
 
 //SENDS
 -(void)handleSearchButtonPressed:(id)sender{
     
-    /*NSString *searchText = _searchBar.text;
+    NSString *searchText = _searchBar.text;
     NSData *data = [searchText dataUsingEncoding:NSUTF8StringEncoding];
     NSError *error = nil;
     
@@ -107,16 +116,7 @@
         
         _textDisplayField.text = [NSString stringWithFormat:@"%@", error];
         NSLog(@"%@",error);
-    }*/
-    
-    /*if(!_session.connectedPeers || !_session.connectedPeers.count){
-        
-        _textDisplayField.text = @"WE ARE NOT CONNECTED";
     }
-    else{
-        
-        _textDisplayField.text = @"WE ARE CONNECTED";
-    }*/
 }
 
 //BROWSER DELEGATE METHOD THAT IDENTIFIES WHEN WE CAN NO LONGER LOCATE A PEER
@@ -127,6 +127,16 @@
 
 //REMOTE PEER HAS ALTERED ITS STATE SOMEHOW
 - (void)session:(MCSession *)session peer:(MCPeerID *)peerID didChangeState:(MCSessionState)state{
+    
+    /*if(state == MCSessionStateNotConnected){
+        
+       _textDisplayField.text = @"WE ARE NOT CONNECTED";
+    }
+    
+    if(state == MCSessionStateConnected){
+        
+        _textDisplayField.text = @"WE ARE CONNECTED";
+    }*/
     
 }
 
