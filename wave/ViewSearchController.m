@@ -12,12 +12,12 @@
 @interface ViewController () <MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate>
 
 //SEEDER AND LEECHER FOR ADVERTISER/SEARCHER
-@property (nonatomic) MCNearbyServiceAdvertiser *autoadvertiser;
-@property (nonatomic) MCNearbyServiceBrowser *autobrowser;
-@property (nonatomic) MCPeerID *localpeerID;
-@property (nonatomic) MCSession *session;
-@property (nonatomic) NSMutableArray *connectedpeersArray;
-@property (nonatomic) NSInteger peerArrayIndex;
+@property (atomic) MCNearbyServiceAdvertiser *autoadvertiser;
+@property (atomic) MCNearbyServiceBrowser *autobrowser;
+@property (atomic) MCPeerID *localpeerID;
+@property (atomic) MCSession *session;
+@property (atomic) NSString *displayName;
+@property (atomic) NSInteger receivedInvite;
 
 @end
 
@@ -27,14 +27,11 @@
 - (void)viewDidLoad {
     
     [super viewDidLoad];
-    
-    //WE WANT TO START FILLING IN OUR PEER ARRAY AT THE 0th INDEX
-    _peerArrayIndex = 0;
-    
+    //_receivedInvite = 0;
     //THIS NEXT PART STARTS ADVERTISING
     NSString *uniqueIdentifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
-    NSString *displayName = [NSString stringWithFormat: @"Wave-Device-%@", uniqueIdentifier];
-    _localpeerID = [[MCPeerID alloc] initWithDisplayName:displayName];
+    _displayName = [NSString stringWithFormat: @"Wave-Device-%@", uniqueIdentifier];
+    _localpeerID = [[MCPeerID alloc] initWithDisplayName: _displayName];
     _session = [[MCSession alloc] initWithPeer:_localpeerID];
     _session.delegate = self;
     
@@ -43,54 +40,48 @@
     _autoadvertiser.delegate = self;
     [_autoadvertiser startAdvertisingPeer];
     
-    /*//THIS NEXT PART SEARCHES FOR OTHER PEERS WHO ARE ADVERTISING THEMSELVES.
+    //THIS NEXT PART SEARCHES FOR OTHER PEERS WHO ARE ADVERTISING THEMSELVES.
     _autobrowser = [[MCNearbyServiceBrowser alloc] initWithPeer:_localpeerID serviceType:@"wave-msg"];
     _autobrowser.delegate = self;
-    [_autobrowser startBrowsingForPeers];*/
-    
-    _textDisplayField.text = @"VIEW DID LOAD";
+    [_autobrowser startBrowsingForPeers];
+
+    _textDisplayField.text = [NSString stringWithFormat:@"VIEW DID LOAD-MYPID:%@", _displayName];
 }
 
 //BROWSER DELEGATE METHOD THAT IDENTIFIES WHEN WE HAVE FOUND A PEER, GETS CALLED WHEN PEER IS FODUN BY AUTOBROWSER OBJECT
 - (void)browser:(MCNearbyServiceBrowser *)browser foundPeer:(MCPeerID *)peerID withDiscoveryInfo:(NSDictionary *)info{
     
-    //CONNECT TO THE PEER AND INVITE TO SESSION
-    NSString *contextString = @"wave-msg";
-    NSData *context = [contextString dataUsingEncoding:NSUTF8StringEncoding]; //ARBITRARY CONTEXT (EXTRA DATA PASSED TO USER) here = to serviceType
-    [_autobrowser invitePeer:peerID toSession:_session withContext:context timeout:30];
-    
-    //ADD A PEER TO THE ARRAY OF PEERS WE ARE CONNECTED TO
-    _peerArrayIndex++;
-    _connectedpeersArray[_peerArrayIndex] = peerID;
-    
     _textDisplayField.text = @"FOUND PEER";
+    //CONNECT TO THE PEER AND INVITE TO SESSION
+    //NSString *contextString = @"wave-msg";
+    //NSData *context = [contextString dataUsingEncoding:NSUTF8StringEncoding]; //ARBITRARY CONTEXT (EXTRA DATA PASSED TO USER) here = to serviceType
+    
+    //MAKE SURE WE HAVE A SESSSION IF WE DONT MAKE ONE.
+    if (!_session) {
+        _textDisplayField.text = @"!SESSION";
+
+        MCPeerID *peerID = [[MCPeerID alloc] initWithDisplayName:_displayName];
+        _session = [[MCSession alloc] initWithPeer:peerID];
+        _session.delegate = self;
+    }
+    
+    [_autobrowser invitePeer:peerID toSession:_session withContext:nil timeout:5.0];
+    //_receivedInvite = 1;
     
 }
 
-
-
-
-
-
-
-
 //ADVERTISING DELEGATE METHOD THAT IDENTIFIES WHEN WE RECEIVE AND INVITE FROM A PEER
-- (void)advertiser:(MCNearbyServiceAdvertiser *)advertiser didReceiveInvitationFromPeer:(MCPeerID *)peerID withContext:(NSData *)context
+- (void)advertiser:(MCNearbyServiceAdvertiser *)advertiser didReceiveInvitationFromPeer:(MCPeerID *)peerID withContext:(NSData *)context invitationHandler:(void (^)(BOOL accept, MCSession *session))invitationHandler{
+    
+    _textDisplayField.text = @"RECEIVED INVITATION FROM PEER";
+    //ACCEPTS THE INVITATION OF THE PEER BY CONNECTING TO THEM
+    invitationHandler(YES, _session);
+    [_autoadvertiser stopAdvertisingPeer];
+}
 
- invitationHandler:(void (^)(BOOL accept, MCSession *session))invitationHandler{
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+- (void) session:(MCSession *)session didReceiveCertificate:(NSArray *)certificate fromPeer:(MCPeerID *)peerID certificateHandler:(void (^)(BOOL accept))certificateHandler
+{
+    certificateHandler(YES);
 }
 
 // RECEIVED DATA FROM REMOTE PEER - GONNA DISPLAY DATA IN OUR TEXTFIELD HERE
@@ -103,24 +94,42 @@
 //SENDS
 -(void)handleSearchButtonPressed:(id)sender{
     
-    NSString *searchText = _searchBar.text;
+    /*NSString *searchText = _searchBar.text;
     NSData *data = [searchText dataUsingEncoding:NSUTF8StringEncoding];
     NSError *error = nil;
     
-    if([_session sendData:data toPeers:_connectedpeersArray withMode:MCSessionSendDataReliable error:&error]){
+    //connectedPeers IS THE ARRAY OF PEERS TO WHOM WE ARE CONNECTED (SET AUTOMATICALLY)
+    if([_session sendData:data toPeers:_session.connectedPeers withMode:MCSessionSendDataReliable error:&error]){
         
         _textDisplayField.text = @"DATA SEND FROM THIS PHONE";
     }
     else{
         
         _textDisplayField.text = [NSString stringWithFormat:@"%@", error];
+        NSLog(@"%@",error);
+    }*/
+    
+    /*if(!_session.connectedPeers || !_session.connectedPeers.count){
+        
+        _textDisplayField.text = @"WE ARE NOT CONNECTED";
     }
+    else{
+        
+        _textDisplayField.text = @"WE ARE CONNECTED";
+    }*/
 }
 
 //BROWSER DELEGATE METHOD THAT IDENTIFIES WHEN WE CAN NO LONGER LOCATE A PEER
 - (void)browser:(MCNearbyServiceBrowser *)browser lostPeer:(MCPeerID *)peerID{
     
+    _textDisplayField.text = @"LOST PEER";
 }
+
+//REMOTE PEER HAS ALTERED ITS STATE SOMEHOW
+- (void)session:(MCSession *)session peer:(MCPeerID *)peerID didChangeState:(MCSessionState)state{
+    
+}
+
 
 /******
  UNUSED/UNIMPLEMENTED SECTION
@@ -135,11 +144,6 @@
     
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
-}
-
-//REMOTE PEER HAS ALTERED ITS STATE SOMEHOW
-- (void)session:(MCSession *)session peer:(MCPeerID *)peerID didChangeState:(MCSessionState)state{
-    
 }
 
 // RECEIVED BYTE STREAM FROM REMOTE PEER
