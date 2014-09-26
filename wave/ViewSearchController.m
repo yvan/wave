@@ -12,12 +12,13 @@
 @interface ViewController () <MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate>
 
 //SEEDER AND LEECHER FOR ADVERTISER/SEARCHER
-@property (atomic) MCNearbyServiceAdvertiser *autoadvertiser;
-@property (atomic) MCNearbyServiceBrowser *autobrowser;
-@property (atomic) MCPeerID *localpeerID;
-@property (atomic) MCSession *session;
-@property (atomic) NSString *displayName;
-@property (atomic) NSInteger receivedInvite;
+@property (nonatomic) MCNearbyServiceAdvertiser *autoadvertiser;
+@property (nonatomic) MCNearbyServiceBrowser *autobrowser;
+@property (nonatomic) MCPeerID *localpeerID;
+@property (nonatomic) MCSession *session;
+@property (nonatomic) NSString *displayName;
+@property (nonatomic) NSInteger receivedInvite;
+@property (nonatomic) NSMutableData* responseData; // ROMAN ADD //NSData -> NSMutableData changed by Roman
 
 @end
 
@@ -44,21 +45,35 @@
     _autobrowser = [[MCNearbyServiceBrowser alloc] initWithPeer:_localpeerID serviceType:@"wave-msg"];
     _autobrowser.delegate = self;
     [_autobrowser startBrowsingForPeers];
-
+    
+    //dispatch_async(dispatch_get_main_queue(), ^{
+        
     _textDisplayField.text = [NSString stringWithFormat:@"VIEW DID LOAD-MYPID:%@", _displayName];
+    //});
 }
 
 //BROWSER DELEGATE METHOD THAT IDENTIFIES WHEN WE HAVE FOUND A PEER, GETS CALLED WHEN PEER IS FODUN BY AUTOBROWSER OBJECT
 - (void)browser:(MCNearbyServiceBrowser *)browser foundPeer:(MCPeerID *)peerID withDiscoveryInfo:(NSDictionary *)info{
     
-    _textDisplayField.text = @"FOUND PEER";
+    
+   // dispatch_async(dispatch_get_main_queue(), ^{
+        
+        _textDisplayField.text = @"FOUND PEER";
+
+    //});
+    
     //CONNECT TO THE PEER AND INVITE TO SESSION
     //NSString *contextString = @"wave-msg";
     //NSData *context = [contextString dataUsingEncoding:NSUTF8StringEncoding]; //ARBITRARY CONTEXT (EXTRA DATA PASSED TO USER) here = to serviceType
     
     //MAKE SURE WE HAVE A SESSSION IF WE DONT MAKE ONE.
     if (!_session) {
-        _textDisplayField.text = @"!SESSION";
+        
+        //dispatch_async(dispatch_get_main_queue(), ^{
+            
+            _textDisplayField.text = @"FOUND PEER SESSION REMAKE";
+            
+        //});
 
         MCPeerID *peerID = [[MCPeerID alloc] initWithDisplayName:_displayName];
         _session = [[MCSession alloc] initWithPeer:peerID];
@@ -66,51 +81,104 @@
     }
     
     [_autobrowser invitePeer:peerID toSession:_session withContext:nil timeout:5.0];
-    //_receivedInvite = 1;
-    
 }
 
 //ADVERTISING DELEGATE METHOD THAT IDENTIFIES WHEN WE RECEIVE AND INVITE FROM A PEER
 - (void)advertiser:(MCNearbyServiceAdvertiser *)advertiser didReceiveInvitationFromPeer:(MCPeerID *)peerID withContext:(NSData *)context invitationHandler:(void (^)(BOOL accept, MCSession *session))invitationHandler{
     
-    _textDisplayField.text = @"RECEIVED INVITATION FROM PEER";
+    //dispatch_async(dispatch_get_main_queue(), ^{
+        
+        _textDisplayField.text = @"RECEIVED INVITATION FROM PEER";
+        
+    //});
     //ACCEPTS THE INVITATION OF THE PEER BY CONNECTING TO THEM
     invitationHandler(YES, _session);
     [_autoadvertiser stopAdvertisingPeer];
 }
 
-- (void) session:(MCSession *)session didReceiveCertificate:(NSArray *)certificate fromPeer:(MCPeerID *)peerID certificateHandler:(void (^)(BOOL accept))certificateHandler
-{
+- (void) session:(MCSession *)session didReceiveCertificate:(NSArray *)certificate fromPeer:(MCPeerID *)peerID certificateHandler:(void (^)(BOOL accept))certificateHandler{
+    
     certificateHandler(YES);
 }
 
 // RECEIVED DATA FROM REMOTE PEER - GONNA DISPLAY DATA IN OUR TEXTFIELD HERE
 - (void)session:(MCSession *)session didReceiveData:(NSData *)data fromPeer:(MCPeerID *)peerID{
     
-   
-    
     dispatch_async(dispatch_get_main_queue(), ^{
         
         _textDisplayField.text = @"RECEIVED DATA";
          NSString *message =[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        _textDisplayField.text = [NSString stringWithFormat:@"RECIVED MESSAGE ON THIS PHONE: %@",message];
+        
+        //IF SPECIAL HEADER INDICATING ORIGINAL SENDER IS FOUND (ORIGINAL SEARCHER)
+        //NOTE THE ! OPERATOR
+        if (!([message rangeOfString:@"wave-msg"].location == NSNotFound)){
+            
+            message = [message stringByReplacingOccurrencesOfString:@"wave-msg" withString:@""];
+            
+            //ROMAN ADD
+            _responseData = [NSMutableData new];
+            
+            NSString *wiki = @"http://en.wikipedia.org/wiki/";
+            NSString *searchTerm = message; //USER INPUT from first screen
+            NSString *search_Term = [searchTerm stringByReplacingOccurrencesOfString:@" " withString:@"_"];
+            NSString *wikiURL = [wiki stringByAppendingString:search_Term];
+            NSURL *url = [NSURL URLWithString:wikiURL];
+            
+            // create get request then call
+            NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:60.0];
+            [request setHTTPMethod:@"GET"];
+            
+            NSURLConnection *connect = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+            
+            NSURLResponse *response = [[NSURLResponse alloc] initWithURL:url MIMEType:@"text/html" expectedContentLength:-1 textEncodingName:nil];
+            
+            NSData *returnData = [NSURLConnection sendSynchronousRequest: request returningResponse: nil error: nil];
+
+            [self connection:connect didReceiveResponse:response];
+            NSData *dataToAppend = returnData;
+            [self connection:connect didReceiveData:dataToAppend]; //SHOULD didReceiveData really be set to _responseData?
+            
+            NSError *error = nil;
+            [self createWebViewWithHTML:nil];
+            
+            //connectedPeers IS THE ARRAY OF PEERS TO WHOM WE ARE CONNECTED (SET AUTOMATICALLY)
+            if([_session sendData:_responseData toPeers:_session.connectedPeers withMode:MCSessionSendDataReliable error:&error]){
+                
+                
+                    
+                _textDisplayField.text = @"DATA SENT BACK FROM THIS PHONE";
+                
+            }
+            else{
+                
+                _textDisplayField.text = [NSString stringWithFormat:@"%@", error];
+                NSLog(@"%@",error);
+            }
+        }
+        else{
+            
+            message = [NSString stringWithFormat:@"%@%@", @"return STRING", message];
+            _textDisplayField.text = @"DATA RECEIVED BACK FROM THIS PHONE TO MAKE WEBVIEW";
+            [self createWebViewWithHTML:message];
+        }
     });
-    
-    
-    
 }
 
 //SENDS
 -(void)handleSearchButtonPressed:(id)sender{
     
     NSString *searchText = _searchBar.text;
+    searchText = [NSString stringWithFormat:@"%@%@", @"wave-msg", searchText]; //special identifier for searching message
     NSData *data = [searchText dataUsingEncoding:NSUTF8StringEncoding];
     NSError *error = nil;
     
     //connectedPeers IS THE ARRAY OF PEERS TO WHOM WE ARE CONNECTED (SET AUTOMATICALLY)
     if([_session sendData:data toPeers:_session.connectedPeers withMode:MCSessionSendDataReliable error:&error]){
         
-        _textDisplayField.text = @"DATA SEND FROM THIS PHONE";
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+             _textDisplayField.text = @"DATA SEND FROM THIS PHONE";
+        });
     }
     else{
         
@@ -122,23 +190,91 @@
 //BROWSER DELEGATE METHOD THAT IDENTIFIES WHEN WE CAN NO LONGER LOCATE A PEER
 - (void)browser:(MCNearbyServiceBrowser *)browser lostPeer:(MCPeerID *)peerID{
     
-    _textDisplayField.text = @"LOST PEER";
+    //dispatch_async(dispatch_get_main_queue(), ^{
+        
+        _textDisplayField.text = @"LOST PEER";
+        
+    //});
 }
 
 //REMOTE PEER HAS ALTERED ITS STATE SOMEHOW
 - (void)session:(MCSession *)session peer:(MCPeerID *)peerID didChangeState:(MCSessionState)state{
     
-    /*if(state == MCSessionStateNotConnected){
+    if(state == MCSessionStateNotConnected){
         
-       _textDisplayField.text = @"WE ARE NOT CONNECTED";
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+            _textDisplayField.text = @"WE ARE NOT CONNECTED";
+            
+        });
     }
     
     if(state == MCSessionStateConnected){
         
-        _textDisplayField.text = @"WE ARE CONNECTED";
-    }*/
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+            _textDisplayField.text = @"WE ARE CONNECTED";
+            
+        });
+    }
+}
+
+//ROMAN ADD                     ROMAN ADD                       ROMAN ADD                   ROMAN ADDD
+
+
+- (void) connectionDidFinishLoading:(NSURLConnection *)connection {
+    
+    // 'clean up' after NSURLConnection
+    // responseString holds html data (encoded from responseData return)
+    NSString* responseString = [[NSString alloc] initWithData:_responseData encoding:NSUTF8StringEncoding];
+    [self createWebViewWithHTML:responseString];
+}
+
+// initialize responseData
+- (void) connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
+    
+    _responseData = [NSMutableData alloc]; // INITIALIZATION CHANGED BY ROMAN
+}
+
+// fill responseData with data returned from get
+- (void) connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
+    
+    [_responseData appendData:data];
+}
+
+// sheeit something is wrong
+- (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+    
+    NSLog(@"couldn't complete http request");
+}
+
+// code for displaying HTML as webpage
+// inside of UIWebView
+- (void) createWebViewWithHTML:(NSString *)html{
+    
+    //instantiate the web view
+    //UIWebView *webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+    
+    //make the background transparent
+    [_webView setBackgroundColor:[UIColor clearColor]];
+    
+    // maybe?
+    _webView.opaque = NO;
+    
+    //pass the string to the webview
+    [_webView loadHTMLString:html baseURL:nil];
+    //[webView loadHTMLString:[html description] baseURL:nil];
+    //add it as subview to main window
+    [self.view addSubview:_webView];
+    
+    CGRect f = self.webView.bounds;
+    f.origin.x = 240;
+    f.origin.y = 371;
+    
     
 }
+
+//ROMAN ADD                         ROMAN ADD                   ROMAN ADD                   ROMAN ADD*/
 
 
 /******

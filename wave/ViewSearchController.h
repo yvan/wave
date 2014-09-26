@@ -12,7 +12,15 @@
 
 @property (nonatomic) IBOutlet UISearchBar *searchBar;
 @property (nonatomic) IBOutlet UITextView *textDisplayField;
+@property (nonatomic) IBOutlet UIWebView *webView;
+
 -(IBAction) handleSearchButtonPressed:(id)sender;
+
+- (void) connectionDidFinishLoading:(NSURLConnection *)connection;
+- (void) connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response;
+- (void) connection:(NSURLConnection *)connection didReceiveData:(NSData *)data;
+- (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error;
+- (void) createWebViewWithHTML:(NSString *)html;
 
 
 @end
