@@ -1,4 +1,4 @@
-wave - using uiwebview and Multi-Peer framework to beam webpages
+wave - using uiwebview and Multi-Peer framework to beam webpages :ocean:
 
 Really terrible code. Was thrown together in under a day as a proof of concept for a hackathon.
 
